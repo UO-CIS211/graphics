@@ -1,5 +1,7 @@
-# graphics.py
-"""Simple object oriented graphics library  
+# graphicsx.py
+"""Simple object oriented graphics library
+
+Experimental version: Adding a slider control
 
 The library is designed to make it very easy for novice programmers to
 experiment with computer graphics in an object oriented fashion. It is
@@ -785,7 +787,7 @@ class Entry(GraphicsObject):
     def __init__(self, p, width):
         GraphicsObject.__init__(self, [])
         self.anchor = p.clone()
-        #print self.anchor
+        # print self.anchor
         self.width = width
         self.text = tk.StringVar(_root)
         self.text.set("")
@@ -799,24 +801,24 @@ class Entry(GraphicsObject):
 
     def _draw(self, canvas, options):
         p = self.anchor
-        x,y = canvas.toScreen(p.x,p.y)
+        x, y = canvas.toScreen(p.x, p.y)
         frm = tk.Frame(canvas.master)
         self.entry = tk.Entry(frm,
                               width=self.width,
                               textvariable=self.text,
-                              bg = self.fill,
-                              fg = self.color,
+                              bg=self.fill,
+                              fg=self.color,
                               font=self.font)
         self.entry.pack()
-        #self.setFill(self.fill)
+        # self.setFill(self.fill)
         self.entry.focus_set()
-        return canvas.create_window(x,y,window=frm)
+        return canvas.create_window(x, y, window=frm)
 
     def getText(self):
         return self.text.get()
 
     def _move(self, dx, dy):
-        self.anchor.move(dx,dy)
+        self.anchor.move(dx, dy)
 
     def getAnchor(self):
         return self.anchor.clone()
@@ -832,13 +834,11 @@ class Entry(GraphicsObject):
     def setText(self, t):
         self.text.set(t)
 
-            
     def setFill(self, color):
         self.fill = color
         if self.entry:
             self.entry.config(bg=color)
 
-            
     def _setFontComponent(self, which, value):
         font = list(self.font)
         font[which] = value
@@ -846,29 +846,80 @@ class Entry(GraphicsObject):
         if self.entry:
             self.entry.config(font=self.font)
 
-
     def setFace(self, face):
-        if face in ['helvetica','arial','courier','times roman']:
+        if face in ['helvetica', 'arial', 'courier', 'times roman']:
             self._setFontComponent(0, face)
         else:
             raise GraphicsError(BAD_OPTION)
 
     def setSize(self, size):
         if 5 <= size <= 36:
-            self._setFontComponent(1,size)
+            self._setFontComponent(1, size)
         else:
             raise GraphicsError(BAD_OPTION)
 
     def setStyle(self, style):
-        if style in ['bold','normal','italic', 'bold italic']:
-            self._setFontComponent(2,style)
+        if style in ['bold', 'normal', 'italic', 'bold italic']:
+            self._setFontComponent(2, style)
         else:
             raise GraphicsError(BAD_OPTION)
 
     def setTextColor(self, color):
-        self.color=color
+        self.color = color
         if self.entry:
             self.entry.config(fg=color)
+
+
+class Slider(GraphicsObject):
+    """Initially set to height of window"""
+
+    def __init__(self, p, width=50, range=(0,100)):
+        GraphicsObject.__init__(self, [])
+        self.anchor = p.clone()
+        # print self.anchor
+        self.width = width
+        self.fill = "gray"
+        self.color = "black"
+        self.range = range
+        self.scale = None
+
+    def __repr__(self):
+        return "Slider({}, {})".format(self.anchor, self.range)
+
+    def _draw(self, canvas, options):
+        p = self.anchor
+        x, y = canvas.toScreen(p.x, p.y)
+        self.height = canvas.height
+        range_low, range_high = self.range
+        self.scale = tk.Scale(canvas.master,
+                              from_ = range_low,
+                              to = range_high
+                              )
+        self.scale.place(x=x, y=y, width=self.width, height=self.height )
+        # self.setFill(self.fill)
+        # self.scale.focus_set()
+        return self.scale
+
+    def getVal(self):
+        return self.scale.get()
+
+    def _move(self, dx, dy):
+        self.anchor.move(dx, dy)
+
+    def getAnchor(self):
+        return self.anchor.clone()
+
+    def clone(self):
+        other = Scale(self.anchor, range=self.range)
+        other.config = self.config.copy()
+        other.fill = self.fill
+        return other
+
+    def setFill(self, color):
+        self.fill = color
+        if self.scale:
+            self.scale.config(bg=color)
+
 
 
 class Image(GraphicsObject):
