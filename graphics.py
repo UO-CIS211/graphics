@@ -688,7 +688,64 @@ class Line(_BBox):
         if not option in ["first","last","both","none"]:
             raise GraphicsError(BAD_OPTION)
         self._reconfig("arrow", option)
+
+def _points_bbox(points):
+    assert len(points) > 0
+    p0 = points[0]
+    if isinstance(p0, Point):
+        x_min, x_max, y_min, y_max = p0.x, p0.x, p0.y, p0.y
+    else:
+        x_min, y_min = p0
+        x_max, y_max = p0
+    for p in points:
+        if isinstance(p,Point):
+            x,y = p.x, p.y
+        else:
+            x,y = p
+        if x < x_min:  x_min = x
+        if y < y_min:  y_min = y
+        if x > x_max:  x_max = x
+        if y > y_max:  y_max = y
+    ll = Point(x_min, y_min)
+    ur = Point(x_max, y_max)
+    return ll, ur
         
+class PolyLine(_BBox):
+    
+    def __init__(self, points):
+        """Need not be Point objects"""
+        self.points = points
+        ll, ur = _points_bbox(points)
+        _BBox.__init__(self, ll, ur, ["arrow", "width", "fill"])
+        self.setFill(DEFAULT_CONFIG['outline'])
+        self.setOutline = self.setFill
+
+    def __repr__(self):
+        return "PolyLine({})".format(self.points)
+
+    def clone(self):
+        other = PolyLine(self.points)
+        other.config = self.config.copy()
+        return other
+  
+    def _draw(self, canvas, options):
+        coords = []
+        for p in self.points:
+            if isinstance(p, Point):
+                x,y = Point.x, Point.y
+            else: 
+                x,y = p
+            x,y = canvas.toScreen(x,y)
+            coords.append(x)
+            coords.append(y)
+
+        return canvas.create_line(*coords,options)
+        
+    def setArrow(self, option):
+        if not option in ["first","last","both","none"]:
+            raise GraphicsError(BAD_OPTION)
+        self._reconfig("arrow", option)
+
 
 class Polygon(GraphicsObject):
     
